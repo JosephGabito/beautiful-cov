@@ -6,6 +6,8 @@ from beautiful_cov.domain.coverage_report import (
     CoverageReport,
     CoverageStatus,
     FileCoverage,
+    SourceLine,
+    SourceLineStatus,
 )
 
 
@@ -37,6 +39,32 @@ class FileCoverageTests(TestCase):
             "File path must stay inside the measured project.",
         ):
             FileCoverage(path="../outside.py", statements=2, missing=0)
+
+    def test_exposes_unique_test_contexts_from_covered_lines(self) -> None:
+        file = FileCoverage(
+            path="app/main.py",
+            statements=2,
+            missing=1,
+            source_lines=(
+                SourceLine(
+                    number=1,
+                    text="value = load()",
+                    status=SourceLineStatus.COVERED,
+                    test_contexts=("tests/test_main.py::test_load",),
+                ),
+                SourceLine(
+                    number=2,
+                    text="raise Missing()",
+                    status=SourceLineStatus.MISSING,
+                ),
+            ),
+            contexts_recorded=True,
+        )
+
+        self.assertEqual(
+            file.test_contexts,
+            ("tests/test_main.py::test_load",),
+        )
 
 
 class CoverageReportTests(TestCase):

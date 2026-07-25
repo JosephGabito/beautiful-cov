@@ -13,6 +13,32 @@ class CoverageStatus(str, Enum):
     CRITICAL = "critical"
 
 
+class SourceLineStatus(str, Enum):
+    """How Coverage.py classified one source line."""
+
+    COVERED = "covered"
+    MISSING = "missing"
+    EXCLUDED = "excluded"
+    PLAIN = "plain"
+
+
+@dataclass(frozen=True)
+class SourceLine:
+    """Source text and coverage evidence for one numbered line."""
+
+    number: int
+    text: str
+    status: SourceLineStatus
+    test_contexts: tuple[str, ...] = ()
+
+    def __post_init__(self) -> None:
+        """Keep line evidence internally consistent."""
+        if self.number < 1:
+            raise ValueError("Source line number must be positive.")
+        if self.test_contexts and self.status is not SourceLineStatus.COVERED:
+            raise ValueError("Only covered lines can have test contexts.")
+
+
 def coverage_status(percentage: float) -> CoverageStatus:
     """Classify a percentage using one project-wide vocabulary."""
     if percentage < 70:
@@ -36,6 +62,8 @@ class FileCoverage:
     path: str
     statements: int
     missing: int
+    source_lines: tuple[SourceLine, ...] = ()
+    contexts_recorded: bool = False
 
     def __post_init__(self) -> None:
         """Protect the arithmetic used throughout the report."""
@@ -48,6 +76,27 @@ class FileCoverage:
             raise ValueError("Statement count cannot be negative.")
         if not 0 <= self.missing <= self.statements:
             raise ValueError("Missing count must be between 0 and the statement count.")
+        if self.source_lines:
+            expected_numbers = tuple(range(1, len(self.source_lines) + 1))
+            actual_numbers = tuple(line.number for line in self.source_lines)
+            if actual_numbers != expected_numbers:
+                raise ValueError("Source lines must be consecutive and start at one.")
+
+            executable = sum(
+                line.status
+                in {
+                    SourceLineStatus.COVERED,
+                    SourceLineStatus.MISSING,
+                }
+                for line in self.source_lines
+            )
+            missing = sum(
+                line.status is SourceLineStatus.MISSING for line in self.source_lines
+            )
+            if executable != self.statements or missing != self.missing:
+                raise ValueError(
+                    "Source line evidence must match file coverage totals."
+                )
 
     @property
     def name(self) -> str:
@@ -73,6 +122,19 @@ class FileCoverage:
     def status(self) -> CoverageStatus:
         """Return the file's coverage health."""
         return coverage_status(self.percentage)
+
+    @property
+    def test_contexts(self) -> tuple[str, ...]:
+        """Return unique named test contexts for the file."""
+        return tuple(
+            sorted(
+                {
+                    context
+                    for line in self.source_lines
+                    for context in line.test_contexts
+                }
+            )
+        )
 
 
 @dataclass(frozen=True)

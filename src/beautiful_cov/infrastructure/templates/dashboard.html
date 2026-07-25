@@ -2,26 +2,34 @@
 {% import "macros.html" as ui %}
 
 {% block main %}
-  <section class="summary summary--dashboard" aria-labelledby="summary-label">
-    <div class="summary-total">{{ "%.0f"|format(report.total_percentage) }}%</div>
-    <div class="summary-detail">
-      <h1 class="summary-label" id="summary-label">Total coverage</h1>
+  <section class="project-summary" aria-labelledby="summary-label">
+    <h1 id="summary-label">Project coverage</h1>
+    <div class="project-percentage">{{ "%.0f"|format(report.total_percentage) }}%</div>
+    <div class="project-coverage-bar">
       {{ ui.coverage_bar(
         report.total_percentage,
         report_status,
         "%.1f%% total coverage"|format(report.total_percentage)
       ) }}
     </div>
+    <dl class="project-facts" aria-label="Coverage totals">
+      <div>
+        <dt>statements</dt>
+        <dd>{{ "{:,}".format(report.total_statements) }}</dd>
+      </div>
+      <div>
+        <dt>missing</dt>
+        <dd>{{ "{:,}".format(report.total_missing) }}</dd>
+      </div>
+      <div>
+        <dt>files</dt>
+        <dd>{{ "{:,}".format(report.files|length) }}</dd>
+      </div>
+    </dl>
   </section>
 
-  <section class="metrics metrics--large" aria-label="Coverage summary">
-    {{ ui.metric(report.total_statements, "statements") }}
-    {{ ui.metric(report.total_missing, "missing") }}
-    {{ ui.metric(report.files|length, "files") }}
-  </section>
-
-  <section class="story-section health" aria-labelledby="health-title">
-    <h2 id="health-title">Coverage health</h2>
+  <section class="report-section health" aria-labelledby="health-title">
+    <h2 id="health-title">File coverage</h2>
     <div class="health-bar" aria-label="Distribution of file coverage">
       {% for group in health_groups %}
         <span class="health-segment health-segment--{{ group.status }}"
@@ -39,8 +47,8 @@
   </section>
 
   {% if risk_rows %}
-    <section class="story-section" aria-labelledby="risk-title">
-      <h2 id="risk-title">Where to look</h2>
+    <section class="report-section" aria-labelledby="risk-title">
+      <h2 id="risk-title">Directories by missing lines</h2>
       <div class="table-wrap">
         <table>
           <thead>
@@ -61,8 +69,8 @@
     </section>
   {% endif %}
 
-  <section class="story-section" aria-labelledby="structure-title">
-    <h2 id="structure-title">Project structure</h2>
+  <section class="report-section" aria-labelledby="structure-title">
+    <h2 id="structure-title">Project root</h2>
     <div class="table-wrap">
       <table>
         <thead>

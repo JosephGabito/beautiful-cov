@@ -35,9 +35,10 @@
 
   <section class="contents" aria-labelledby="contents-title">
     <div class="contents-toolbar">
-      <h2 id="contents-title">Contents</h2>
+      <h2 id="contents-title">Files and directories</h2>
       <input class="search" id="content-search" type="search"
-        placeholder="Search contents…" aria-label="Search directory contents">
+        placeholder="Filter files and directories…"
+        aria-label="Filter files and directories">
     </div>
 
     <div class="table-wrap">
@@ -57,7 +58,7 @@
           {% endfor %}
         </tbody>
       </table>
-      <div class="empty" id="empty-state">No items match this search.</div>
+      <div class="empty" id="empty-state">No matching entries.</div>
     </div>
   </section>
 {% endblock %}

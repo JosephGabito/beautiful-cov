@@ -5,22 +5,18 @@
 </span>
 {%- endmacro %}
 
-{% macro metric(value, label) -%}
-<div class="metric">
-  <span class="metric-value">{{ "{:,}".format(value) }}</span>
-  <span class="metric-label">{{ label }}</span>
-</div>
-{%- endmacro %}
-
 {% macro coverage_row(row, show_type=false) -%}
 <tr data-search="{{ row.search_text }}">
   <td class="name-cell">
     {% if row.href %}
-      <a class="directory-link" href="{{ row.href }}">
+      <a class="{{ 'directory-link' if row.kind == 'Directory' else 'file-link' }}"
+        href="{{ row.href }}">
         <span>{{ row.name }}</span>
-        <svg viewBox="0 0 16 16" aria-hidden="true">
-          <path d="M3 8h9M8.5 4.5 12 8l-3.5 3.5"></path>
-        </svg>
+        {% if row.kind == "Directory" %}
+          <svg viewBox="0 0 16 16" aria-hidden="true">
+            <path d="M3 8h9M8.5 4.5 12 8l-3.5 3.5"></path>
+          </svg>
+        {% endif %}
       </a>
     {% else %}
       <span class="file-name">{{ row.name }}</span>

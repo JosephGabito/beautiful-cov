@@ -1,0 +1,129 @@
+{% extends "base.html" %}
+{% import "macros.html" as ui %}
+
+{% block page_class %} page--source{% endblock %}
+
+{% block main %}
+  <nav class="breadcrumbs source-breadcrumbs" aria-label="Breadcrumb">
+    <ol>
+      {% for crumb in breadcrumbs %}
+        <li>
+          {% if crumb.href %}
+            <a href="{{ crumb.href }}">{{ crumb.name }}</a>
+          {% else %}
+            <span aria-current="page">{{ crumb.name }}</span>
+          {% endif %}
+        </li>
+      {% endfor %}
+    </ol>
+  </nav>
+
+  <div class="source-workspace">
+    <aside class="source-inspector" aria-labelledby="source-title">
+      <div class="source-summary">
+        <h1 id="source-title">{{ file.name }}</h1>
+        <div class="source-score">
+          <span class="source-percentage">{{ "%.0f"|format(file.percentage) }}%</span>
+          <span class="source-coverage-label">coverage</span>
+        </div>
+        {{ ui.coverage_bar(
+          file.percentage,
+          file_status,
+          "%.1f%% coverage"|format(file.percentage)
+        ) }}
+      </div>
+
+      <dl class="source-facts">
+        <div>
+          <dt>statements</dt>
+          <dd>{{ "{:,}".format(file.statements) }}</dd>
+        </div>
+        <div>
+          <dt>covered</dt>
+          <dd>{{ "{:,}".format(file.covered) }}</dd>
+        </div>
+        <div>
+          <dt>missing</dt>
+          <dd>{{ "{:,}".format(file.missing) }}</dd>
+        </div>
+        <div>
+          <dt>{{ "test context" if test_context_count == 1 else "test contexts" }}</dt>
+          <dd>{{ "{:,}".format(test_context_count) }}</dd>
+        </div>
+      </dl>
+
+      <div class="source-legend" aria-label="Coverage legend">
+        <span><i class="legend-covered"></i>Covered</span>
+        <span><i class="legend-missing"></i>Not covered</span>
+        <span><i class="legend-excluded"></i>Excluded</span>
+      </div>
+
+      {% if file.missing %}
+        <nav class="missing-navigation" aria-label="Missing line navigation">
+          <button type="button" data-missing-nav="previous" aria-label="Previous missing line">
+            <svg viewBox="0 0 20 20" aria-hidden="true">
+              <path d="M10 16V4M5.5 8.5 10 4l4.5 4.5"></path>
+            </svg>
+            Previous missing
+          </button>
+          <button type="button" data-missing-nav="next" aria-label="Next missing line">
+            <svg viewBox="0 0 20 20" aria-hidden="true">
+              <path d="M10 4v12m4.5-4.5L10 16l-4.5-4.5"></path>
+            </svg>
+            Next missing
+          </button>
+        </nav>
+      {% endif %}
+
+      {% if not file.contexts_recorded %}
+        <div class="context-notice">
+          <strong>Test contexts unavailable.</strong>
+          <code>pytest --cov-context=test</code>
+        </div>
+      {% endif %}
+    </aside>
+
+    <script id="test-context-data" type="application/json">
+      {{ test_contexts|tojson }}
+    </script>
+
+    <section class="source-canvas" aria-label="Source code coverage">
+      <div class="source-section">
+        <div class="source-header" aria-hidden="true">
+          <span></span>
+          <span>#</span>
+          <span>Source</span>
+          <span>Evidence</span>
+        </div>
+        <div class="source-code">
+          {% for line in source_lines %}
+            <div class="source-line source-line--{{ line.status }}"
+              id="L{{ line.number }}" data-line-status="{{ line.status }}">
+              <span class="source-rail" aria-hidden="true"></span>
+              <a class="line-number" href="#L{{ line.number }}"
+                aria-label="Line {{ line.number }}">{{ line.number }}</a>
+              <code>{{ line.code }}</code>
+              <span class="line-evidence">
+                {% if line.status == "missing" %}
+                  Not covered
+                {% elif line.test_context_ids %}
+                  <button type="button" class="context-toggle"
+                    aria-expanded="false" aria-controls="contexts-L{{ line.number }}"
+                    data-context-toggle>
+                    {{ line.test_context_count }}
+                    {{ "test" if line.test_context_count == 1 else "tests" }}
+                  </button>
+                {% endif %}
+              </span>
+            </div>
+            {% if line.test_context_ids %}
+              <div class="line-contexts" id="contexts-L{{ line.number }}"
+                data-context-ids="{{ line.test_context_ids|join(',') }}"
+                data-hidden-contexts="{{ line.hidden_contexts }}" hidden></div>
+            {% endif %}
+          {% endfor %}
+        </div>
+      </div>
+    </section>
+  </div>
+{% endblock %}

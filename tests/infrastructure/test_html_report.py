@@ -6,7 +6,12 @@ from tempfile import TemporaryDirectory
 from unittest import TestCase
 from urllib.parse import unquote
 
-from beautiful_cov.domain.coverage_report import CoverageReport, FileCoverage
+from beautiful_cov.domain.coverage_report import (
+    CoverageReport,
+    FileCoverage,
+    SourceLine,
+    SourceLineStatus,
+)
 from beautiful_cov.infrastructure.html_report import StaticHtmlReportWriter
 
 
@@ -50,17 +55,30 @@ class StaticHtmlReportWriterTests(TestCase):
             dashboard = index_file.read_text(encoding="utf-8")
             app_page = output_directory / "directories" / "app" / "index.html"
             app_html = app_page.read_text(encoding="utf-8")
-            css_exists = (output_directory / "assets" / "report.css").is_file()
+            css_file = output_directory / "assets" / "report.css"
+            css_exists = css_file.is_file()
+            css = css_file.read_text(encoding="utf-8")
             javascript_exists = (output_directory / "assets" / "report.js").is_file()
 
         self.assertEqual(index_file.name, "index.html")
-        self.assertIn("Coverage health", dashboard)
-        self.assertIn("Where to look", dashboard)
-        self.assertIn("Project structure", dashboard)
+        self.assertIn("File coverage", dashboard)
+        self.assertIn("Directories by missing lines", dashboard)
+        self.assertIn("Project root", dashboard)
+        self.assertIn("≥80%", dashboard)
+        self.assertIn("70–79%", dashboard)
+        self.assertIn("&lt;70%", dashboard)
+        self.assertNotIn("Where to look", dashboard)
+        self.assertNotIn(">strong<", dashboard)
+        self.assertNotIn(">watch<", dashboard)
+        self.assertNotIn(">critical<", dashboard)
         self.assertIn('href="directories/app/index.html"', dashboard)
         self.assertNotIn(">bc<", dashboard)
         self.assertTrue(css_exists)
         self.assertTrue(javascript_exists)
+        self.assertIn(
+            "grid-template-columns: minmax(240px, 20%) minmax(0, 1fr);",
+            css,
+        )
         self.assertIn('aria-label="Breadcrumb"', app_html)
         self.assertIn('href="../../index.html">Project</a>', app_html)
         self.assertIn("&lt;unsafe&gt;.py", app_html)
@@ -117,3 +135,83 @@ class StaticHtmlReportWriterTests(TestCase):
                         broken_links.append(f"{page.name}: {link}")
 
         self.assertEqual(broken_links, [])
+
+    def test_writes_source_lines_and_their_test_contexts(self) -> None:
+        file = FileCoverage(
+            path="app/main.py",
+            statements=3,
+            missing=1,
+            source_lines=(
+                SourceLine(
+                    1,
+                    "def load_value() -> int:",
+                    SourceLineStatus.COVERED,
+                    ("tests/test_main.py::test_load_value",),
+                ),
+                SourceLine(
+                    2,
+                    "    return 1",
+                    SourceLineStatus.COVERED,
+                    ("tests/test_main.py::test_load_value",),
+                ),
+                SourceLine(
+                    3,
+                    '    raise RuntimeError("missing")',
+                    SourceLineStatus.MISSING,
+                ),
+                SourceLine(4, "    # no cover", SourceLineStatus.EXCLUDED),
+            ),
+            contexts_recorded=True,
+        )
+
+        with TemporaryDirectory() as directory:
+            output_directory = Path(directory) / "report"
+            StaticHtmlReportWriter().write(
+                CoverageReport(files=(file,)),
+                output_directory,
+            )
+            source_page = output_directory / "files" / "app" / "main.py.html"
+            source_html = source_page.read_text(encoding="utf-8")
+            directory_html = (
+                output_directory / "directories" / "app" / "index.html"
+            ).read_text(encoding="utf-8")
+
+        self.assertIn('class="source-line source-line--covered"', source_html)
+        self.assertIn('class="source-line source-line--missing"', source_html)
+        self.assertIn('class="source-workspace"', source_html)
+        self.assertIn('class="source-inspector"', source_html)
+        self.assertIn('class="source-canvas"', source_html)
+        self.assertIn("<dt>test context</dt>", source_html)
+        self.assertIn("<dd>1</dd>", source_html)
+        self.assertNotIn("1 test contexts", source_html)
+        self.assertIn("Not covered", source_html)
+        self.assertIn("tests/test_main.py::test_load_value", source_html)
+        self.assertEqual(
+            source_html.count("tests/test_main.py::test_load_value"),
+            1,
+        )
+        self.assertIn('id="test-context-data"', source_html)
+        self.assertIn('data-context-ids="0"', source_html)
+        self.assertIn("syntax-keyword", source_html)
+        self.assertIn('href="../../files/app/main.py.html"', directory_html)
+
+    def test_explains_when_test_contexts_were_not_collected(self) -> None:
+        file = FileCoverage(
+            path="main.py",
+            statements=1,
+            missing=0,
+            source_lines=(SourceLine(1, "value = 1", SourceLineStatus.COVERED),),
+        )
+
+        with TemporaryDirectory() as directory:
+            output_directory = Path(directory) / "report"
+            StaticHtmlReportWriter().write(
+                CoverageReport(files=(file,)),
+                output_directory,
+            )
+            html = (output_directory / "files" / "main.py.html").read_text(
+                encoding="utf-8"
+            )
+
+        self.assertIn("Test contexts unavailable.", html)
+        self.assertIn("pytest --cov-context=test", html)
