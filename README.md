@@ -1,8 +1,5 @@
-<p align="center">
-  <img width="200" alt="beautiful-cov logo — local Python coverage reports" src="https://github.com/user-attachments/assets/a51e9994-4f6a-434f-b552-3c99d78888cb" />
-</p>
+<img width="400" alt="beautiful-cov logo — local Python coverage reports" src="https://github.com/user-attachments/assets/a51e9994-4f6a-434f-b552-3c99d78888cb" />
 
----
 
 **Beautiful, local-first coverage reports for Python.**
 
