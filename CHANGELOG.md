@@ -11,7 +11,7 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ### Changed
 
-- Centered the README wordmark at a stable GitHub-compatible size.
+- Set the README wordmark to a stable GitHub-compatible 400-pixel width.
 - Replaced screenshot-generated image text with a descriptive product alt.
 
 ### Maintenance
