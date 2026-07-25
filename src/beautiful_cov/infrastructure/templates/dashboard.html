@@ -1,0 +1,84 @@
+{% extends "base.html" %}
+{% import "macros.html" as ui %}
+
+{% block main %}
+  <section class="summary summary--dashboard" aria-labelledby="summary-label">
+    <div class="summary-total">{{ "%.0f"|format(report.total_percentage) }}%</div>
+    <div class="summary-detail">
+      <h1 class="summary-label" id="summary-label">Total coverage</h1>
+      {{ ui.coverage_bar(
+        report.total_percentage,
+        report_status,
+        "%.1f%% total coverage"|format(report.total_percentage)
+      ) }}
+    </div>
+  </section>
+
+  <section class="metrics metrics--large" aria-label="Coverage summary">
+    {{ ui.metric(report.total_statements, "statements") }}
+    {{ ui.metric(report.total_missing, "missing") }}
+    {{ ui.metric(report.files|length, "files") }}
+  </section>
+
+  <section class="story-section health" aria-labelledby="health-title">
+    <h2 id="health-title">Coverage health</h2>
+    <div class="health-bar" aria-label="Distribution of file coverage">
+      {% for group in health_groups %}
+        <span class="health-segment health-segment--{{ group.status }}"
+          style="--segment: {{ '%.2f'|format(group.percentage) }}%"></span>
+      {% endfor %}
+    </div>
+    <div class="health-legend">
+      {% for group in health_groups %}
+        <span>
+          <strong class="text-{{ group.status }}">{{ group.count }}</strong>
+          {{ group.label }}
+        </span>
+      {% endfor %}
+    </div>
+  </section>
+
+  {% if risk_rows %}
+    <section class="story-section" aria-labelledby="risk-title">
+      <h2 id="risk-title">Where to look</h2>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th scope="col">Directory</th>
+              <th scope="col">Statements</th>
+              <th scope="col">Missing</th>
+              <th scope="col">Coverage</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for row in risk_rows %}
+              {{ ui.coverage_row(row) }}
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </section>
+  {% endif %}
+
+  <section class="story-section" aria-labelledby="structure-title">
+    <h2 id="structure-title">Project structure</h2>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th scope="col">Name</th>
+            <th scope="col">Statements</th>
+            <th scope="col">Missing</th>
+            <th scope="col">Coverage</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for row in project_rows %}
+            {{ ui.coverage_row(row) }}
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </section>
+{% endblock %}

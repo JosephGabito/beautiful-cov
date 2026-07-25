@@ -3,8 +3,10 @@
 from argparse import ArgumentParser
 from pathlib import Path
 
-from coverage import Coverage
-from coverage.exceptions import CoverageException
+from beautiful_cov.application.errors import ReportGenerationError
+from beautiful_cov.application.generate_report import GenerateCoverageReport
+from beautiful_cov.infrastructure.coverage_py import CoveragePyDataReader
+from beautiful_cov.infrastructure.html_report import StaticHtmlReportWriter
 
 DEFAULT_OUTPUT_DIRECTORY = Path("beautiful-cov-report")
 
@@ -24,27 +26,22 @@ def _build_parser() -> ArgumentParser:
     return parser
 
 
-def _generate_report(output_directory: Path) -> tuple[float, Path]:
-    """Generate the report and return its coverage total and entry point."""
-    resolved_output = output_directory.expanduser()
-    coverage = Coverage()
-    coverage.load()
-    total = coverage.html_report(directory=str(resolved_output))
-    return total, (resolved_output / "index.html").resolve()
-
-
 def main() -> None:
     """Generate a local HTML report from existing Coverage.py data."""
     parser = _build_parser()
     args = parser.parse_args()
+    generate_report = GenerateCoverageReport(
+        reader=CoveragePyDataReader(),
+        writer=StaticHtmlReportWriter(),
+    )
 
     try:
-        total, report = _generate_report(args.output)
-    except CoverageException as error:
+        report = generate_report.execute(args.output)
+    except ReportGenerationError as error:
         parser.exit(1, f"beautiful-cov: {error}\n")
 
-    print(f"Coverage: {total:.1f}%")
-    print(f"Report: {report}")
+    print(f"Coverage: {report.coverage.total_percentage:.1f}%")
+    print(f"Report: {report.index_file}")
 
 
 if __name__ == "__main__":

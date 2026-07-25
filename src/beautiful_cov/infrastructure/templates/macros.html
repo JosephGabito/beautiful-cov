@@ -1,0 +1,45 @@
+{% macro coverage_bar(percentage, status, label="") -%}
+<span class="coverage-track" aria-label="{{ label }}">
+  <span class="coverage-fill coverage-fill--{{ status }}"
+    style="--coverage: {{ '%.2f'|format(percentage) }}%"></span>
+</span>
+{%- endmacro %}
+
+{% macro metric(value, label) -%}
+<div class="metric">
+  <span class="metric-value">{{ "{:,}".format(value) }}</span>
+  <span class="metric-label">{{ label }}</span>
+</div>
+{%- endmacro %}
+
+{% macro coverage_row(row, show_type=false) -%}
+<tr data-search="{{ row.search_text }}">
+  <td class="name-cell">
+    {% if row.href %}
+      <a class="directory-link" href="{{ row.href }}">
+        <span>{{ row.name }}</span>
+        <svg viewBox="0 0 16 16" aria-hidden="true">
+          <path d="M3 8h9M8.5 4.5 12 8l-3.5 3.5"></path>
+        </svg>
+      </a>
+    {% else %}
+      <span class="file-name">{{ row.name }}</span>
+    {% endif %}
+  </td>
+  {% if show_type %}
+    <td class="type-cell">{{ row.kind }}</td>
+  {% endif %}
+  <td>{{ "{:,}".format(row.statements) }}</td>
+  <td>{{ "{:,}".format(row.missing) }}</td>
+  <td>
+    <div class="coverage-cell">
+      {{ coverage_bar(
+        row.percentage,
+        row.status,
+        "%.1f%% coverage"|format(row.percentage)
+      ) }}
+      <span>{{ "%.0f"|format(row.percentage) }}%</span>
+    </div>
+  </td>
+</tr>
+{%- endmacro %}

@@ -1,0 +1,63 @@
+{% extends "base.html" %}
+{% import "macros.html" as ui %}
+
+{% block main %}
+  <nav class="breadcrumbs" aria-label="Breadcrumb">
+    <ol>
+      {% for crumb in breadcrumbs %}
+        <li>
+          {% if crumb.href %}
+            <a href="{{ crumb.href }}">{{ crumb.name }}</a>
+          {% else %}
+            <span aria-current="page">{{ crumb.name }}</span>
+          {% endif %}
+        </li>
+      {% endfor %}
+    </ol>
+  </nav>
+
+  <section class="directory-summary" aria-labelledby="directory-title">
+    <h1 id="directory-title">{{ directory.name }}</h1>
+    <div class="directory-score">
+      <span>{{ "%.0f"|format(directory.total_percentage) }}%</span>
+      {{ ui.coverage_bar(
+        directory.total_percentage,
+        directory_status,
+        "%.1f%% directory coverage"|format(directory.total_percentage)
+      ) }}
+    </div>
+    <div class="directory-metrics">
+      <span><strong>{{ "{:,}".format(directory.total_statements) }}</strong> statements</span>
+      <span><strong>{{ "{:,}".format(directory.total_missing) }}</strong> missing</span>
+      <span><strong>{{ "{:,}".format(directory.total_files) }}</strong> files</span>
+    </div>
+  </section>
+
+  <section class="contents" aria-labelledby="contents-title">
+    <div class="contents-toolbar">
+      <h2 id="contents-title">Contents</h2>
+      <input class="search" id="content-search" type="search"
+        placeholder="Search contents…" aria-label="Search directory contents">
+    </div>
+
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th scope="col">Name</th>
+            <th scope="col">Type</th>
+            <th scope="col">Statements</th>
+            <th scope="col">Missing</th>
+            <th scope="col">Coverage</th>
+          </tr>
+        </thead>
+        <tbody id="content-rows">
+          {% for row in rows %}
+            {{ ui.coverage_row(row, show_type=true) }}
+          {% endfor %}
+        </tbody>
+      </table>
+      <div class="empty" id="empty-state">No items match this search.</div>
+    </div>
+  </section>
+{% endblock %}

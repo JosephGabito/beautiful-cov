@@ -11,7 +11,10 @@ license = "Apache-2.0"
 license-files = ["LICENSE"]
 authors = [{ name = "Joseph Gabito" }]
 requires-python = ">=3.10"
-dependencies = ["coverage>=7.0"]
+dependencies = [
+    "coverage>=7.0",
+    "jinja2>=3.1",
+]
 keywords = ["coverage", "reporting", "testing", "html"]
 classifiers = [
     "Development Status :: 2 - Pre-Alpha",
