@@ -1,6 +1,6 @@
-<div style="width: auto; display: block; width: 200px; height: auto">
-<img width="1896" height="476" alt="CleanShot 2026-07-25 at 12  38 44@2x" src="https://github.com/user-attachments/assets/a51e9994-4f6a-434f-b552-3c99d78888cb" />
-</div>
+<p align="center">
+  <img width="200" alt="beautiful-cov logo — local Python coverage reports" src="https://github.com/user-attachments/assets/a51e9994-4f6a-434f-b552-3c99d78888cb" />
+</p>
 
 ---
 
